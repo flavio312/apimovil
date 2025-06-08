@@ -44,7 +44,7 @@ export const createMenu = async (req: Request, res: Response):Promise<any> =>{
 };
 
 export const deleteMenu = async (req: Request, res: Response):Promise<any> => {
-    const {id_Menu} = req.body;
+    const {id_Menu} = req.params;
 
     try{
         const deletedRows = await Menu.destroy({where: { id_Menu }});
@@ -53,14 +53,44 @@ export const deleteMenu = async (req: Request, res: Response):Promise<any> => {
             return res.status(404).json({message:"Platillo no encontrado"});
         }
 
-        const message = {
-            action : 'delete',
-            id_Menu
-        };
+        const message = {action : 'delete', id_Menu};
         res.json({message:"Plato eliminado correctamente"});
         console.log("Plato eliminado con éxito:", message);
     }catch(error){
         console.error("Error al eliminar un platillo:", error);
         res.status(500).json({ message: "Error al eliminar el platillo" });;
+    }
+};
+
+export const updateMenu = async (req: Request, res: Response):Promise<any> => {
+    const { id_Menu } = req.params; // Obtener el ID desde la URL
+    const { titulo, ingredientes, preparacion} = req.body;
+
+    if (!id_Menu) {
+        return res.status(400).json({ message: "El campo 'id_Menu' es obligatorio." });
+    }
+
+    try {
+        const [updatedRows] = await Menu.update(
+            { titulo, ingredientes, preparacion },
+            { where: { id_Menu } }
+        );
+
+        if (updatedRows === 0) {
+            return res.status(404).json({ message: "Platillo no encontrado" });
+        }
+
+        const message = {
+            action: 'update',
+            id_Menu,
+            titulo,
+            ingredientes,
+            preparacion
+        };
+        res.json({ message: "Plato actualizado correctamente" });
+        console.log("Plato actualizado con éxito:", message);
+    } catch (error) {
+        console.error("Error al actualizar un platillo:", error);
+        res.status(500).json({ message: "Error al actualizar el platillo" });
     }
 };
