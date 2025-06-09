@@ -1,6 +1,4 @@
 import { Request, Response } from "express";
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import User from "../models/user.models";
 
 export const getUsers = async (req: Request, res: Response): Promise<any> => {
@@ -16,36 +14,32 @@ export const getUsers = async (req: Request, res: Response): Promise<any> => {
 export const createUser = async (req:Request, res:Response):Promise<any>=>{
     const {name, email, password} = req.body;
 
-    try{
-        const saltRounds = 10;
-        const hashedPassword = await bcrypt.hash(password, saltRounds);
-
+    try {
+      
         const newUser = await User.create({
             name,
             email,
-            password: hashedPassword
+            password
         });
+        
         const message = {
             action: 'create',
             id: newUser.getDataValue('id_User'),
             name,
             email,
-            hashedPassword
+            password
         }
-       
-        const secretKey = process.env.SECRET_KEY || '';
-        const token = jwt.sign({ id: newUser.getDataValue('id_User') }, secretKey, {
-            expiresIn: '1h',
-        });
+
+
         res.status(201).json({
             message: 'Usuario creado exitosamente',
             data: newUser,
-            token
+
         });
         console.log("Usuario creado con éxito:", message);
-    }catch (error){
-        res.status(500).json({message: "Error al crear el usuario"});
-        console.log(error)
+    } catch (error) {
+        res.status(500).json({ message: "Error al crear el usuario" });
+        console.log(error);
     }
 };
 
@@ -75,14 +69,9 @@ export const updateUser = async (req:Request, res:Response):Promise<any> =>{
     const {name, email, password} = req.body;
 
     try{
-        const saltRounds = 10;
-        let hashedPassword = password;
-        if(password){
-            hashedPassword = await bcrypt.hash(password, saltRounds);
-        }
-
+       
         const [affectedRows] = await User.update(
-            {name, email, password:hashedPassword},
+            {name, email, password: password},
             {where: {id_User:id}}
         )
 
@@ -95,7 +84,7 @@ export const updateUser = async (req:Request, res:Response):Promise<any> =>{
             id,
             name,
             email,
-            hashedPassword
+            password
         }
         res.json({
             message: "Usuario actualizado correctamente",
