@@ -1,4 +1,6 @@
 import { Request, Response } from "express";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import User from "../models/user.models";
 
 export const getUsers = async (req: Request, res: Response): Promise<any> => {
@@ -14,12 +16,17 @@ export const getUsers = async (req: Request, res: Response): Promise<any> => {
 export const createUser = async (req:Request, res:Response):Promise<any>=>{
     const {name, email, password} = req.body;
 
+    if (!name || !email || !password) {
+        return res.status(400).json({ message: "Faltan campos obligatorios: name, email o password" });
+    }
+
     try {
-      
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
         const newUser = await User.create({
             name,
             email,
-            password
+            password: hashedPassword
         });
         
         const message = {
@@ -27,14 +34,18 @@ export const createUser = async (req:Request, res:Response):Promise<any>=>{
             id: newUser.getDataValue('id_User'),
             name,
             email,
-            password
+            hashedPassword
         }
 
+        const secretKey = process.env.SECRET_KEY || '';
+        const token = jwt.sign({ id: newUser.getDataValue('id_User') }, secretKey, {
+            expiresIn: '1h',
+        });
 
         res.status(201).json({
             message: 'Usuario creado exitosamente',
             data: newUser,
-
+            token
         });
         console.log("Usuario creado con éxito:", message);
     } catch (error) {
@@ -69,9 +80,14 @@ export const updateUser = async (req:Request, res:Response):Promise<any> =>{
     const {name, email, password} = req.body;
 
     try{
-       
+        const saltRounds = 10;
+        let hashedPassword = password;
+        if(password){
+            hashedPassword = await bcrypt.hash(password, saltRounds);
+        }
+
         const [affectedRows] = await User.update(
-            {name, email, password: password},
+            {name, email, password:hashedPassword},
             {where: {id_User:id}}
         )
 
@@ -84,7 +100,7 @@ export const updateUser = async (req:Request, res:Response):Promise<any> =>{
             id,
             name,
             email,
-            password
+            hashedPassword
         }
         res.json({
             message: "Usuario actualizado correctamente",
