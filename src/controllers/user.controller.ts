@@ -62,7 +62,7 @@ export const deleteUser = async (req:Request, res:Response):Promise<void> =>{
 
     try {
 
-    const deletedRows = await User.destroy({ where: { id_Usuario: id } });
+    const deletedRows = await User.destroy({ where: { id_User: id } });
 
     if (deletedRows === 0) {
       res.status(404).json({ message: 'Usuario no encontrado' });
