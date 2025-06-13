@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/user.models";
+import dotenv from 'dotenv';
 
 export const getUsers = async (req: Request, res: Response): Promise<any> => {
     try {
@@ -15,6 +16,8 @@ export const getUsers = async (req: Request, res: Response): Promise<any> => {
 
 export const createUser = async (req:Request, res:Response):Promise<any>=>{
     const {name, email, password} = req.body;
+    
+    dotenv.config();
 
     if (!name || !email || !password) {
         return res.status(400).json({ message: "Faltan campos obligatorios: name, email o password" });
@@ -37,7 +40,7 @@ export const createUser = async (req:Request, res:Response):Promise<any>=>{
             hashedPassword
         }
 
-        const secretKey = process.env.SECRET_KEY || '';
+        const secretKey = process.env.JWT_SECRET || '';
         const token = jwt.sign({ id: newUser.getDataValue('id_User') }, secretKey, {
             expiresIn: '1h',
         });
@@ -54,15 +57,18 @@ export const createUser = async (req:Request, res:Response):Promise<any>=>{
     }
 };
 
-export const deleteUser = async (req:Request, res:Response):Promise<any> =>{
-    const {id} = req.body;  
+export const deleteUser = async (req:Request, res:Response):Promise<void> =>{
+    const {id} = req.params;  
 
     try {
+
     const deletedRows = await User.destroy({ where: { id_Usuario: id } });
 
     if (deletedRows === 0) {
-      return res.status(404).json({ message: 'Usuario no encontrado' });
+      res.status(404).json({ message: 'Usuario no encontrado' });
+      return;
     }
+
 
     const message = {
       action: 'delete',
