@@ -12,25 +12,33 @@ export const getMenu = async (req: Request, res:Response): Promise<any> =>{
     }
 };
 
-export const createMenu = async (req: Request, res: Response):Promise<any> =>{
+interface MulterRequest extends Request {
+  file: File;
+}
+
+export const createMenu = async (req: MulterRequest, res: Response):Promise<any> =>{
     const {titulo, ingredientes, preparacion} = req.body;
+    const file = req.file;
+
     console.log("Datos recibidos:", req.body);
 
     if (!preparacion || typeof preparacion !== "string") {
         return res.status(400).json({ message: "El campo 'preparacion' es obligatorio y debe ser texto válido." });
     }
     const cleanPreparacion = preparacion.trim();
+    const imagePath = file ? file: null;
 
    try {
     const newMenu = await Menu.create({
-        titulo, ingredientes, preparacion: cleanPreparacion
+        titulo, ingredientes, preparacion: cleanPreparacion, imagen: imagePath
     });
     const message = {
         action : "create",
         id: newMenu.getDataValue("id_Menu"),
         titulo,
         ingredientes,
-        preparacion
+        preparacion,
+        imagen: imagePath
     }
     res.status(201).json({
         message: 'Plato agregado correctamente',
@@ -63,8 +71,8 @@ export const deleteMenu = async (req: Request, res: Response):Promise<any> => {
 };
 
 export const updateMenu = async (req: Request, res: Response):Promise<any> => {
-    const { id_Menu } = req.params; // Obtener el ID desde la URL
-    const { titulo, ingredientes, preparacion} = req.body;
+    const { id_Menu } = req.params;
+    const { titulo, ingredientes, preparacion, imagen} = req.body;
 
     if (!id_Menu) {
         return res.status(400).json({ message: "El campo 'id_Menu' es obligatorio." });
@@ -72,7 +80,7 @@ export const updateMenu = async (req: Request, res: Response):Promise<any> => {
 
     try {
         const [updatedRows] = await Menu.update(
-            { titulo, ingredientes, preparacion },
+            { titulo, ingredientes, preparacion, imagen },
             { where: { id_Menu } }
         );
 
@@ -85,7 +93,8 @@ export const updateMenu = async (req: Request, res: Response):Promise<any> => {
             id_Menu,
             titulo,
             ingredientes,
-            preparacion
+            preparacion, 
+            imagen
         };
         res.json({ message: "Plato actualizado correctamente" });
         console.log("Plato actualizado con éxito:", message);

@@ -2,8 +2,10 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { Request, Response } from 'express';
 import User from '../models/user.models';
+import dotenv from 'dotenv';
 
 export const loginUser = async (req: Request, res: Response): Promise<any> => {
+  dotenv.config();
     const { email, password } = req.body;
   
     try {
